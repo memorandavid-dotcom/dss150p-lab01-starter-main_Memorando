@@ -1,0 +1,44 @@
+# Selection Rationale: customers.csv was chosen because it provides a well-defined primary key structure and clean scalar attributes for baseline validation.
+
+dataset_name: customers
+version: 1.0
+owner: Data Engineering Team
+source_type: file
+source_format: csv
+acquisition_method: Batch File Load / Local Mount
+expected_update_pattern: daily
+primary_key: customer_id
+
+schema:
+  - name: customer_id
+    type: string
+    nullable: false
+    description: Unique alphanumeric customer identifier
+  - name: first_name
+    type: string
+    nullable: false
+    description: Customer given name
+  - name: last_name
+    type: string
+    nullable: false
+    description: Customer family name
+  - name: email
+    type: string
+    nullable: false
+    description: Customer primary contact email address
+  - name: created_at
+    type: timestamp
+    nullable: true
+    description: Account creation timestamp
+
+quality_rules:
+  - rule: customer_id must be non-null and unique
+  - rule: email must contain valid domain format (@)
+  - rule: first_name and last_name must not be null
+  - rule: duplicate rows across all attributes must be 0
+
+freshness_expectation: daily arrival by 06:00 UTC
+duplicate_policy: reject
+schema_evolution_policy: strict
+consumer: Downstream Analytics / Reporting Warehouse
+notes: Initial contract derived from baseline CSV profiling evidence.

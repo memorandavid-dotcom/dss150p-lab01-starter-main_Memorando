@@ -1,0 +1,3 @@
+New-Item -ItemType Directory -Name "data\evidence" -Force
+
+docker exec -i dss150p-postgres psql -U dss150p -d dss150p_lab -c "SELECT table_schema, table_name, column_name, data_type, is_nullable FROM information_schema.columns WHERE table_schema = 'lab' AND table_name = 'customers';" > data/evidence/schema_validation.txt
