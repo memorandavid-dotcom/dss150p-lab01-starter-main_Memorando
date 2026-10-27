@@ -1,4 +1,6 @@
-# Selection Rationale: customers.csv was chosen because it provides a well-defined primary key structure and clean scalar attributes for baseline validation.
+# Selection Rationale: customers.csv was chosen because it provides a consistent flat schema
+# with seven well-defined scalar attributes and a clear business key, making it the most
+# suitable source for baseline data-contract validation.
 
 dataset_name: customers
 version: 1.0
@@ -7,13 +9,15 @@ source_type: file
 source_format: csv
 acquisition_method: Batch File Load / Local Mount
 expected_update_pattern: daily
+# NOTE: customer_id is the business/natural key but is NOT enforced as UNIQUE in the raw CSV.
+# Uniqueness must be validated on load; the raw file may contain soft duplicates.
 primary_key: customer_id
 
 schema:
   - name: customer_id
     type: string
     nullable: false
-    description: Unique alphanumeric customer identifier
+    description: Alphanumeric customer identifier (format C####). Business key — not guaranteed unique in raw file.
   - name: first_name
     type: string
     nullable: false
@@ -25,20 +29,29 @@ schema:
   - name: email
     type: string
     nullable: false
-    description: Customer primary contact email address
-  - name: created_at
-    type: timestamp
-    nullable: true
-    description: Account creation timestamp
+    description: Customer primary contact email address. All rows in the source file contain a non-null email value.
+  - name: city
+    type: string
+    nullable: false
+    description: Customer city of residence (e.g., Makati, Pasig, Taguig)
+  - name: signup_date
+    type: date
+    nullable: false
+    description: Date the customer account was created (format YYYY-MM-DD, stored as string in CSV — cast to date on load)
+  - name: customer_segment
+    type: string
+    nullable: false
+    description: Customer classification segment (e.g., Retail, Professional, SME, Student)
 
 quality_rules:
-  - rule: customer_id must be non-null and unique
-  - rule: email must contain valid domain format (@)
-  - rule: first_name and last_name must not be null
-  - rule: duplicate rows across all attributes must be 0
+  - rule: customer_id must be non-null; uniqueness must be validated on load (not enforced in raw CSV)
+  - rule: email must be non-null and contain a valid domain format (@)
+  - rule: first_name, last_name, city, signup_date, and customer_segment must not be null
+  - rule: signup_date must be castable to a valid date (YYYY-MM-DD)
+  - rule: duplicate rows across all seven attributes must be 0; soft duplicates (same email, different segment/city) must be flagged
 
 freshness_expectation: daily arrival by 06:00 UTC
 duplicate_policy: reject
 schema_evolution_policy: strict
 consumer: Downstream Analytics / Reporting Warehouse
-notes: Initial contract derived from baseline CSV profiling evidence.
+notes: Contract derived from direct inspection of customers.csv (251 rows, 7 columns). No created_at field exists in the source file.
